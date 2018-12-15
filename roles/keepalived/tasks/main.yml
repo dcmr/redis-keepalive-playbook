@@ -1,0 +1,27 @@
+---
+# file:roles/keepalived/tasks/main.yml
+
+## Install keepalived.
+- name: keepalived | yum安装keepalived
+  yum:
+    name: keepalived
+    state: present
+
+- name: keepalived | 确script_folder目录存在
+  file:
+    path: "{{script_folder}}"
+    state: directory
+
+- template: src=redis_backup.sh.j2 dest={{script_folder}}/redis_backup.sh mode=0755
+- template: src=redis_check.sh.j2 dest={{script_folder}}/redis_check.sh mode=0755
+- template: src=redis_fault.sh.j2 dest={{script_folder}}/redis_fault.sh mode=0755
+- template: src=redis_master.sh.j2 dest={{script_folder}}/redis_master.sh mode=0755
+- template: src=redis_stop.sh.j2 dest={{script_folder}}/redis_stop.sh mode=0755
+
+- name: keepalived | 修改配置文件
+  template: src=keepalived.conf.j2 dest={{script_folder}}/../keepalived.conf mode="u=rw,g=r,o=r"
+
+- name: keepalived | 启动keepalived
+  service:
+    name: keepalived
+    state: started

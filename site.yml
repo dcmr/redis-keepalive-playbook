@@ -1,0 +1,32 @@
+---
+# Site Configuration
+# ==================
+
+- hosts: cluster_master:cluster_slave
+  gather_facts: False
+  roles:
+    - role: redis
+
+# 执行主的设置
+- hosts: cluster_master
+  gather_facts: False
+  roles:
+    - role: keepalived
+      vars:
+        backup_server: "192.168.34.3"
+
+# 执行从的设置
+- hosts: cluster_slave
+  gather_facts: False
+  roles:
+    - role: keepalived
+      vars:
+        backup_server: "192.168.34.2"
+
+- hosts: cluster_slave
+  gather_facts: False
+  tasks:
+    - name: redis | 设置redis从
+      shell: "(./redis_backup.sh)"
+      args:
+        chdir: "{{script_folder}}"

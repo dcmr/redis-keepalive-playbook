@@ -1,0 +1,13 @@
+#!/bin/bash
+###/etc/keepalived/scripts/redis_check.sh
+check_port() {
+    netstat -tlpn | grep "\b$1\b"
+}
+if check_port 6000
+then
+    echo "alive"
+    exit 0
+else
+    echo "die"
+    exit 1
+fi

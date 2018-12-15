@@ -1,0 +1,34 @@
+#!/bin/sh
+
+port="{{deploy_port}}"
+productName="redis{{deploy_port}}"
+
+productNameRootDir="{{deploy_folder}}/redis$port"
+[ ! -e "$productNameRootDir" ] && echo "ERROR: productNameRootDir not find:$productNameRootDir" && exit 1
+
+EXEC=$productNameRootDir/bin/redis-server
+CLIEXEC=$productNameRootDir/bin/redis-cli
+[ ! -e "$EXEC" -o ! -e "$CLIEXEC" ] && echo "ERROR: EXEC or CLIEXEC not find:$EXEC $CLIEXEC" && exit 1
+
+CONF="$productNameRootDir/conf/redis.conf"
+
+# use root exec this script
+if [ $UID -eq 0 ] ; then
+    su {{deploy_user}} -c "sh $0 $*"
+    exit $?
+fi
+
+case "$1" in
+    start)
+        $EXEC $CONF
+        ;;
+    stop)
+        $CLIEXEC -p $port shutdown
+        ;;
+    rewriteconf)
+        $CLIEXEC -p $port config rewrite
+        ;;
+    *)
+        echo "Please use start/stop/rewriteconf as first argument"
+        ;;
+esac

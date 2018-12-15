@@ -1,0 +1,64 @@
+---
+# file:roles/redis/tasks/main.yml
+
+## Install redis.
+- name: redis | 确保存在codis这个group
+  group: name={{deploy_user}} state=present
+
+- name: redis | 确认安装用户存在
+  user:
+    name: "{{deploy_user}}"
+    state: present
+    group: "{{deploy_user}}"
+
+
+- name: redis | 确认远端目录存在，bin/data/conf等，且属主可以访问
+  file:
+    path: "{{item.folder}}"
+    state: directory
+    owner: "{{deploy_user}}"
+    group: "{{deploy_user}}"
+  with_items:
+    - { folder : "{{deploy_folder}}" }
+    - { folder : "{{deploy_folder}}/redis{{deploy_port}}" }
+    - { folder : "{{deploy_folder}}/redis{{deploy_port}}/conf" }
+    - { folder : "{{deploy_folder}}/redis{{deploy_port}}/log" }
+    - { folder : "{{deploy_folder}}/redis{{deploy_port}}/data" }
+    - { folder : "{{deploy_folder}}/redis{{deploy_port}}/bin" }
+
+- name: redis | 拷贝bin文件到远端机器的目录
+  copy:
+    src: "bin/{{item}}"
+    dest: "{{deploy_folder}}/redis{{deploy_port}}/bin/{{item}}"
+    owner: "{{deploy_user}}"
+    group: "{{deploy_user}}"
+    mode: 755
+  with_items:
+    - "redis-benchmark"
+    - "redis-check-aof"
+    - "redis-check-rdb"
+    - "redis-cli"
+    - "redis-server"
+
+- name: redis | 拷贝redis.conf文件到conf目录
+  template: src=redis.conf.j2 dest={{deploy_folder}}/redis{{deploy_port}}/conf/redis.conf mode=0755 owner={{deploy_user}} group={{deploy_user}}
+
+- name: redis | 拷贝load.sh 文件到redis文件
+  template: src=load.sh.j2 dest={{deploy_folder}}/redis{{deploy_port}}/load.sh mode=0755 owner={{deploy_user}} group={{deploy_user}}
+
+- name: redis | 拷贝readme.md 文件到redis文件
+  template: src=readme.md.j2 dest={{deploy_folder}}/redis{{deploy_port}}/readme.md mode=0755 owner={{deploy_user}} group={{deploy_user}}
+
+- name: redis | 关闭旧的redis
+  shell: "(./load.sh stop > /dev/null 2>&1 &)"
+  async: 10
+  poll: 0
+  args:
+    chdir: "{{deploy_folder}}/redis{{deploy_port}}/"
+
+- name: redis | 启动redis
+  shell: "(./load.sh start > /dev/null 2>&1 &)"
+  async: 10
+  poll: 0
+  args:
+    chdir: "{{deploy_folder}}/redis{{deploy_port}}/"

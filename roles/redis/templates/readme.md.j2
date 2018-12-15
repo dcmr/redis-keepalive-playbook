@@ -1,0 +1,8 @@
+启动redis的时候注意事项
+
+这个机器的redis是由keepalived进行高可用
+
+启动redis的顺序应该是
+1 启动本机redis，load.sh start
+2 启动本机keepalived
+service keepalived start

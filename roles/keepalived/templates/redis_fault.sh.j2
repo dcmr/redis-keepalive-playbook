@@ -1,0 +1,7 @@
+#!/bin/bash
+
+LOGFILE={{deploy_folder}}/redis{{deploy_port}}/log/redis-state.log
+
+echo "[fault]" >> $LOGFILE
+date >> $LOGFILE
+service keepalived stop
